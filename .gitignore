@@ -5,4 +5,7 @@
 .gradle/
 build/
 !/gradle/wrapper/gradle-wrapper.jar
+/src/main/generated/
+
 /.apt_generated/
+

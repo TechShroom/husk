@@ -89,6 +89,7 @@ configure([compileJava, compileTestJava]) {
 // ANTLR FIXES
 ext.antlrSrcDir = '.antlr_generated'
 ext.antlrSrcDir2 = 'src/main/generated/antlr'
+file(antlrSrcDir2).mkdirs()
 sourceSets.main.java.srcDir antlrSrcDir2
 
 generateGrammarSource {
