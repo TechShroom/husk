@@ -92,17 +92,7 @@ ext.antlrSrcDir2 = 'src/main/generated/antlr'
 sourceSets.main.java.srcDir antlrSrcDir2
 
 generateGrammarSource {
-    outputDirectory = file(antlrSrcDir)
-}
-
-// A bad hack because gradle sux with antlr
-tasks.getByPath('generateGrammarSource') << {
-    delete antlrSrcDir2 + '/me'
-    copy {
-        from antlrSrcDir
-        into antlrSrcDir2 + '/me/kenzierocks/hnbt/grammar'
-    }
-    delete antlrSrcDir
+    outputDirectory = file(antlrSrcDir2)
 }
 
 eclipse.classpath.file.withXml { provider ->
@@ -113,7 +103,12 @@ eclipse.classpath.file.withXml { provider ->
         </attributes>
     '''
     ignoreOptCompileWarns = new XmlParser(false, true).parseText(ignoreOptCompileWarns)
-    provider.asNode().classpathentry.find { it.@path == antlrSrcDir2 }.children().add(0, ignoreOptCompileWarns)
+    def aSD2 = provider.asNode().classpathentry.find { it.@path == antlrSrcDir2 }
+    if (aSD2 == null) {
+        println("WARNING: You might be missing an ANTLR source dir!")
+        return
+    }
+    aSD2.children().add(0, ignoreOptCompileWarns)
 }
 eclipse.classpath {
     minusConfigurations += [configurations.antlr]
