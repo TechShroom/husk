@@ -20,6 +20,7 @@ apply plugin: 'aversion-apt'
 apply plugin: 'aversion-maven'
 apply plugin: 'aversion-util'
 apply plugin: 'idea'
+apply plugin: 'antlr'
 
 util {
     javaVersion = '1.8'
@@ -47,9 +48,13 @@ repositories {
     }
 }
 
+ext.antlr = '4.5.3'
 dependencies {
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
     compileOnly group: 'com.techshroom', name: 'jsr305-plus', version: '0.0.1'
+
+    antlr group: 'org.antlr', name: 'antlr4', version: antlr
+    compile group: 'org.antlr', name: 'antlr4-runtime', version: antlr
 
     addAPTReqWComp group: 'com.google.guava', name: 'guava', version: '19.0'
     addAPT group: 'com.google.auto.service', name: 'auto-service', version: '1.0-SNAPSHOT'
@@ -80,6 +85,41 @@ configure([compileJava, compileTestJava]) {
     options.incremental = true
     options.fork = true
 }
+
+// ANTLR FIXES
+ext.antlrSrcDir = '.antlr_generated'
+ext.antlrSrcDir2 = 'src/main/generated/antlr'
+sourceSets.main.java.srcDir antlrSrcDir2
+
+generateGrammarSource {
+    outputDirectory = file(antlrSrcDir)
+}
+
+// A bad hack because gradle sux with antlr
+tasks.getByPath('generateGrammarSource') << {
+    delete antlrSrcDir2 + '/me'
+    copy {
+        from antlrSrcDir
+        into antlrSrcDir2 + '/me/kenzierocks/hnbt/grammar'
+    }
+    delete antlrSrcDir
+}
+
+eclipse.classpath.file.withXml { provider ->
+    def ignoreOptCompileWarns = '''
+        <attributes>
+            <attribute name="ignore_optional_problems" value="true"/>
+            <attribute name="optional" value="true"/>
+        </attributes>
+    '''
+    ignoreOptCompileWarns = new XmlParser(false, true).parseText(ignoreOptCompileWarns)
+    provider.asNode().classpathentry.find { it.@path == antlrSrcDir2 }.children().add(0, ignoreOptCompileWarns)
+}
+eclipse.classpath {
+    minusConfigurations += [configurations.antlr]
+}
+
+// END ANTLR FIXES
 
 license {
     ext {
